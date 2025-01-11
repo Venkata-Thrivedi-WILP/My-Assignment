@@ -1,0 +1,15 @@
+artifact_uri: file:///workspaces/My-Assignment/mlruns/214466249201474440/a6ace94b8763459badc7e7758f315e68/artifacts
+end_time: 1736570467103
+entry_point_name: ''
+experiment_id: '214466249201474440'
+lifecycle_stage: active
+run_id: a6ace94b8763459badc7e7758f315e68
+run_name: caring-loon-76
+run_uuid: a6ace94b8763459badc7e7758f315e68
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1736570463967
+status: 3
+tags: []
+user_id: codespace
