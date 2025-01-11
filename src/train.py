@@ -6,11 +6,12 @@ import mlflow.sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
+from mlflow.models.signature import infer_signature
 
 # Load dataset from DVC-managed file
 dataset_path = "data/iris.csv"
 if not os.path.exists(dataset_path):
-    raise FileNotFoundError(f"{dataset_path} not found! Did you run `dvc checkout`?")
+    raise FileNotFoundError(f"{dataset_path} not found!")
 data = pd.read_csv(dataset_path)
 
 # Separate features and target
@@ -32,6 +33,7 @@ hyperparameters = [
 # Start MLflow experiment
 mlflow.set_experiment("Iris Classification Experiment")
 
+# Inside your for-loop in train.py
 for params in hyperparameters:
     with mlflow.start_run():
         # Train model
@@ -43,7 +45,6 @@ for params in hyperparameters:
         # Evaluate model
         predictions = model.predict(X_test)
         accuracy = accuracy_score(y_test, predictions)
-        print(f"Accuracy with params {params}: {accuracy:.2f}")
 
         # Log parameters and metrics to MLflow
         mlflow.log_param("n_estimators", params["n_estimators"])
@@ -54,8 +55,15 @@ for params in hyperparameters:
         os.makedirs("models", exist_ok=True)
         model_path = os.path.join("models", f"rf_model_{params['n_estimators']}_{params['max_depth']}.pkl")
         joblib.dump(model, model_path)
-        print(f"Model saved to {model_path}")
 
-        # Log the model and artifacts to MLflow
-        mlflow.log_artifact(model_path)
-        mlflow.sklearn.log_model(model, artifact_path="model")
+        # Prepare input example and infer signature
+        input_example = pd.DataFrame(X_train[:1])  # Example input (single row)
+        signature = infer_signature(X_train, model.predict(X_train))
+
+        # Log the model and artifacts to MLflow with input_example and signature
+        mlflow.sklearn.log_model(
+            sk_model=model,
+            artifact_path="model",
+            input_example=input_example,
+            signature=signature,
+        )
