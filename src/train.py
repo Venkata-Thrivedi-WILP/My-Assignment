@@ -3,6 +3,7 @@ import pandas as pd
 import joblib
 import mlflow
 import mlflow.sklearn
+import optuna
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
@@ -23,47 +24,66 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
-# Define hyperparameters to experiment with
-hyperparameters = [
-    {"n_estimators": 50, "max_depth": 5},
-    {"n_estimators": 100, "max_depth": 10},
-    {"n_estimators": 150, "max_depth": 15},
-]
+# Define the objective function for Optuna
+def objective(trial):
+    n_estimators = trial.suggest_int("n_estimators", 50, 200, step=50)
+    max_depth = trial.suggest_int("max_depth", 5, 20)
+
+    # Train model with the suggested hyperparameters
+    model = RandomForestClassifier(
+        n_estimators=n_estimators, max_depth=max_depth, random_state=42
+    )
+    model.fit(X_train, y_train)
+
+    # Evaluate model
+    predictions = model.predict(X_test)
+    accuracy = accuracy_score(y_test, predictions)
+    
+    return accuracy
 
 # Start MLflow experiment
 mlflow.set_experiment("Iris Classification Experiment")
 
-# Inside your for-loop in train.py
-for params in hyperparameters:
-    with mlflow.start_run():
-        # Train model
-        model = RandomForestClassifier(
-            n_estimators=params["n_estimators"], max_depth=params["max_depth"], random_state=42
-        )
-        model.fit(X_train, y_train)
+# Start Optuna study for hyperparameter tuning
+study = optuna.create_study(direction="maximize")
+study.optimize(objective, n_trials=10)
 
-        # Evaluate model
-        predictions = model.predict(X_test)
-        accuracy = accuracy_score(y_test, predictions)
+# Get the best hyperparameters from Optuna
+best_params = study.best_params
+print(f"Best hyperparameters: {best_params}")
 
-        # Log parameters and metrics to MLflow
-        mlflow.log_param("n_estimators", params["n_estimators"])
-        mlflow.log_param("max_depth", params["max_depth"])
-        mlflow.log_metric("accuracy", accuracy)
+# Train the model with the best hyperparameters
+best_model = RandomForestClassifier(
+    n_estimators=best_params["n_estimators"],
+    max_depth=best_params["max_depth"],
+    random_state=42,
+)
+best_model.fit(X_train, y_train)
 
-        # Save the model locally
-        os.makedirs("models", exist_ok=True)
-        model_path = os.path.join("models", f"rf_model_{params['n_estimators']}_{params['max_depth']}.pkl")
-        joblib.dump(model, model_path)
+# Evaluate the best model
+predictions = best_model.predict(X_test)
+accuracy = accuracy_score(y_test, predictions)
+print(f"Best Model Accuracy: {accuracy:.2f}")
 
-        # Prepare input example and infer signature
-        input_example = pd.DataFrame(X_train[:1])  # Example input (single row)
-        signature = infer_signature(X_train, model.predict(X_train))
+# Log the best hyperparameters and accuracy to MLflow
+mlflow.log_param("n_estimators", best_params["n_estimators"])
+mlflow.log_param("max_depth", best_params["max_depth"])
+mlflow.log_metric("accuracy", accuracy)
 
-        # Log the model and artifacts to MLflow with input_example and signature
-        mlflow.sklearn.log_model(
-            sk_model=model,
-            artifact_path="model",
-            input_example=input_example,
-            signature=signature,
-        )
+# Save the best model locally
+os.makedirs("models", exist_ok=True)
+model_path = os.path.join("models", f"best_rf_model.pkl")
+joblib.dump(best_model, model_path)
+print(f"Best model saved to {model_path}")
+
+# Prepare input example and infer signature
+input_example = pd.DataFrame(X_train[:1])  # Example input (single row)
+signature = infer_signature(X_train, best_model.predict(X_train))
+
+# Log the best model with MLflow
+mlflow.sklearn.log_model(
+    sk_model=best_model,
+    artifact_path="model",
+    input_example=input_example,
+    signature=signature,
+)
