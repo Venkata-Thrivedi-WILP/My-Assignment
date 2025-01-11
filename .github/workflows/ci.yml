@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - Assginment_v1
   pull_request:
 
 jobs:
