@@ -1,3 +1,9 @@
+LINT
+
+flake8 src/
+
+-------------------------------------------------
+
 Load Dataset => python scripts/save_iris_dataset.py
 
 RUN -> python src/train.py
