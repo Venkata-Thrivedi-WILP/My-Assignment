@@ -2,6 +2,10 @@ LINT
 
 flake8 src/
 
+------------------------------------------------
+
+Pipelines are in .github folder
+
 -------------------------------------------------
 
 Load Dataset => python scripts/save_iris_dataset.py
