@@ -55,9 +55,10 @@ input :
 
 docker login
 
-docker tag iris-model-flask 2023aa05203/test-assignment-repo:latest
+docker tag iris-model-flask 2023aa05203/my-repo:latest
 
-docker push 2023aa05203/test-assignment-repo:latest
+
+docker push 2023aa05203/my-repo:latest
 
 
 https://hub.docker.com/repository/docker/2023aa05203/test-assignment-repo/general

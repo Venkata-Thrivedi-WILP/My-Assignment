@@ -28,9 +28,9 @@ jobs:
     # Build the Docker image
     - name: Build Docker image
       run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/iris-flask-model:latest .
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/jan-repo:latest .
 
     # Push the Docker image to Docker Hub
     - name: Push Docker image
       run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/iris-flask-model:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/jan-repo:latest
