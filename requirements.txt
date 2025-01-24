@@ -6,3 +6,4 @@ joblib
 pandas
 flask-restx
 optuna
+pytest
